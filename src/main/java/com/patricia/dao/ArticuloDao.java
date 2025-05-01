@@ -3,6 +3,7 @@ package com.patricia.dao;
 import com.patricia.model.Articulo;
 import org.jdbi.v3.core.Jdbi;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public class ArticuloDao {
