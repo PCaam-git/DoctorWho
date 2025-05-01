@@ -34,5 +34,39 @@ public class ArticuloDao {
                 .list()
         );
     }
+
+    public void crearArticulo(Articulo articulo) {
+        jdbi.withHandle(handle -> 
+            handle.createUpdate("INSERT INTO articulos (nombre, descripcion, precio, disponible, fecha_añadido) VALUES (:nombre, :descripcion, :precio, :disponible, :fechaAñadido)")
+                .bindBean(articulo)
+                .execute()
+        );
+    }
+
+    public void actualizarArticulo(Articulo articulo) {
+        jdbi.withHandle(handle -> 
+            handle.createUpdate("UPDATE articulos SET nombre = :nombre, descripcion = :descripcion, precio = :precio, disponible = :disponible WHERE id = :id")
+                .bindBean(articulo)
+                .execute()
+        );
+    }
+
+    public void eliminarArticulo(int id) {
+        jdbi.withHandle(handle -> 
+            handle.createUpdate("DELETE FROM articulos WHERE id = :id")
+                .bind("id", id)
+                .execute()
+        );
+    }
+
+    public Articulo obtenerArticulo(int id) {
+        return jdbi.withHandle(handle ->
+            handle.createQuery("SELECT * FROM articulos WHERE id = :id")
+                .bind("id", id)
+                .mapToBean(Articulo.class)
+                .findOne()
+                .orElse(null)
+        );
+    }
 }
 
