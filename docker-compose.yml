@@ -1,0 +1,33 @@
+name: doctorwho
+services:
+  db:
+    image: mariadb:11.3.2
+    container_name: doctorwho-db-dev
+    environment:
+      MYSQL_DATABASE: 'DoctorWho'  # Nombre correcto de tu base de datos
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: 'rootpassword'
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+      - doctorwho_data:/var/lib/mysql
+    restart: always
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: doctorwho-phpmyadmin
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - "8080:80"
+    restart: always
+
+volumes:
+  doctorwho_data:
