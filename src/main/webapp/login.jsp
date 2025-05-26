@@ -1,18 +1,51 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<html>
-    <head>
-        <title>Login</title>
-    </head>
-    <body>
-        <h2>Iniciar Sesión</h2>
-        <form action="login" method="post">
-            <label for="usuario">Usuario:</label>
-            <input type="text" id="usuario" name="usuario"><br>
+<%@include file="includes/header.jsp"%>
 
-            <label for="contraseña">Contraseña</label>
-            <input type="password" name="contraseña" id="contraseña" required><br>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("form").on("submit", function(event) {
+            event.preventDefault();
+            const formValue = $(this).serialize();
+            $.ajax("login", {
+                type: "POST",
+                data: formValue,
+                statusCode: {
+                    200: function(response) {
+                        console.log(response);
+                        if (response === "ok") {
+                            window.location.href = "${pageContext.request.contextPath}/";
+                        } else {
+                            $("#result").html("<div class='alert alert-danger' role='alert'>" + response + "</div>");
+                        }
+                    }
+                }
+            });
+        });
+    });
+</script>
 
-            <button type="submit">Entrar</button>
+<main>
+    <div class="container d-flex justify-content-center">
+        <form>
+            <h1 class="h3 mb-3 fw-normal">Iniciar sesión</h1>
+            <div class="input-group mb-3">
+                <input type="text" name="usuario" class="form-control" placeholder="Usuario">
+            </div>
+
+            <div class="input-group mb-3">
+                <input type="password" name="contraseña" class="form-control" placeholder="Contraseña">
+            </div>
+
+            <div class="input-group mb-3">
+                <input class="btn btn-primary" type="submit" value="Iniciar sesión">
+            </div>
+
+            <div class="input-group mb-3">
+                ¿No tienes usuario? <a href="register.jsp"> Regístrate aqui</a>
+            </div>
+
+            <div id="result"></div>
         </form>
-    </body>
-</html>
+    </div>
+
+<%@include file="includes/footer.jsp"%>

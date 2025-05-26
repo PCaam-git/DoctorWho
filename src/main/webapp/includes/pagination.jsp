@@ -1,16 +1,18 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<nav aria-label="Paginación">
-    <ul class="pagination justify-content-center">
-        <li class="page-item <%= pageNumber == 0 ? "disabled" : "" %>">
-            <a class="page-link" href="?page=<%= previousPageNumber %>&search=<%= search %>">Anterior</a>
-        </li>
-        <% for (int i = 0; i < pageCount; i++) { %>
-        <li class="page-item <%= pageNumber == i ? "active" : "" %>">
-            <a class="page-link" href="?page=<%= i %>&search=<%= search %>"><%= i + 1 %></a>
-        </li>
-        <% } %>
-        <li class="page-item <%= pageNumber == pageCount - 1 ? "disabled" : "" %>">
-            <a class="page-link" href="?page=<%= nextPageNumber %>&search=<%= search %>">Siguiente</a>
-        </li>
-    </ul>
-</nav>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<c:if test="${totalPages > 1}">
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <c:forEach begin="1" end="${totalPages}" var="i">
+                <c:set var="activeClass" value="${i == currentPage ? 'active' : ''}" />
+                
+                <li class="page-item ${activeClass}">
+                    <a class="page-link" href="${pageContext.request.contextPath}/categorias/lista?page=${i}${not empty q ? '&q='.concat(q) : ''}${mostrarSoloConProductos ? '&con_productos=on' : ''}">
+                        ${i}
+                    </a>
+                </li>
+            </c:forEach>
+        </ul>
+    </nav>
+</c:if>

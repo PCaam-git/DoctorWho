@@ -4,10 +4,9 @@ services:
     image: mariadb:11.3.2
     container_name: doctorwho-db-dev
     environment:
-      MYSQL_DATABASE: 'DoctorWho'  # Nombre correcto de tu base de datos
+      MYSQL_DATABASE: 'doctorwho' 
       MYSQL_USER: 'user'
       MYSQL_PASSWORD: 'password'
-      MYSQL_PORT: 3306
       MYSQL_ROOT_PASSWORD: 'rootpassword'
     ports:
       - "3306:3306"
@@ -27,6 +26,18 @@ services:
       PMA_ARBITRARY: 1
     ports:
       - "8080:80"
+    restart: always
+
+  tomcat:
+    image: tomcat:10.1.40-jdk21-temurin
+    container_name: doctorwho-tomcat
+    depends_on:
+      - db
+    ports:
+      - "8083:8080"  # Cambiado a 8083ocker porque phpMyAdmin ya usa 8080
+    volumes:
+      - ./target/doctorwho.war:/usr/local/tomcat/webapps/doctorwho.war
+    command: ["catalina.sh", "run"]
     restart: always
 
 volumes:
