@@ -1,5 +1,10 @@
 # Ignorar directorio de compilación de Maven
-target/
+/target/
+/.idea/
+/*.iml
+*.class
+*.log
+
 
 # Ignorar archivos de Maven y backup
 pom.xml.tag
