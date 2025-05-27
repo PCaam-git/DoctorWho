@@ -20,10 +20,17 @@ public class CategoriaRegisterServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        // Verificar si el usuario es admin
+        // Verificar si el usuario es admin 
         HttpSession session = request.getSession();
         if (session.getAttribute("es_admin") == null || !(boolean) session.getAttribute("es_admin")) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            // Guardar la URL actual para redirección después del login
+            String currentUrl = request.getRequestURL().toString();
+            String queryString = request.getQueryString();
+            if (queryString != null) {
+                currentUrl += "?" + queryString;
+            }
+            response.sendRedirect(request.getContextPath() + "/login?returnUrl=" + 
+                                java.net.URLEncoder.encode(currentUrl, "UTF-8"));
             return;
         }
         
@@ -47,8 +54,6 @@ public class CategoriaRegisterServlet extends HttpServlet {
         String cantidadParam = request.getParameter("cantidad");
         String tieneProductosParam = request.getParameter("tiene_productos");
         String fechaActualizacionParam = request.getParameter("fecha_actualizacion");
-        String precioMedioParam = request.getParameter("precio_medio");
-        String imagen = request.getParameter("imagen");
 
         if (nombre == null || descripcion == null || cantidadParam == null || 
             fechaActualizacionParam == null || nombre.isEmpty() || 
@@ -56,7 +61,7 @@ public class CategoriaRegisterServlet extends HttpServlet {
             fechaActualizacionParam.isEmpty()) {
             
             request.setAttribute("error", "❌ Todos los campos obligatorios deben ser completados.");
-            doGet(request, response); // volvemos al formulario
+            doGet(request, response);
             return;
         }
 
@@ -64,15 +69,9 @@ public class CategoriaRegisterServlet extends HttpServlet {
             int cantidad = Integer.parseInt(cantidadParam);
             boolean tieneProductos = "true".equals(tieneProductosParam);
             Date fechaActualizacion = Date.valueOf(fechaActualizacionParam);
-            BigDecimal precioMedio = null;
             
-            if (precioMedioParam != null && !precioMedioParam.isEmpty()) {
-                precioMedio = new BigDecimal(precioMedioParam);
-            }
-            
-            if (imagen == null || imagen.isEmpty()) {
-                imagen = "default.jpg";
-            }
+            // El precio medio se calculará automáticamente con los triggers de la BD
+            BigDecimal precioMedio = new BigDecimal("0.00");
 
             Database db = new Database();
             db.connect();
@@ -85,7 +84,7 @@ public class CategoriaRegisterServlet extends HttpServlet {
             categoria.setTieneProductos(tieneProductos);
             categoria.setFechaActualizacion(fechaActualizacion);
             categoria.setPrecioMedio(precioMedio);
-            categoria.setImagen(imagen);
+            categoria.setImagen("default.jpg"); // Imagen por defecto
 
             CategoriaDao categoriaDao = new CategoriaDao(connection);
             boolean exito = categoriaDao.addCategoria(categoria);

@@ -56,6 +56,9 @@
 </head>
 
 <body>
+    <jsp:include page="../navbar.jsp">
+        <jsp:param name="pageTitle" value="Nueva Categoría"/>
+    </jsp:include>
     <div class="container">
         <div class="form-container">
             <h2 class="form-title">
@@ -120,30 +123,6 @@
                     <input type="date" id="fecha_actualizacion" name="fecha_actualizacion" 
                            class="form-control" required>
                     <div class="form-text">Fecha de la última actualización</div>
-                </div>
-
-                <!-- Precio medio -->
-                <div class="mb-3">
-                    <label for="precio_medio" class="form-label">
-                        <i class="fas fa-euro-sign me-2"></i>Precio Medio
-                    </label>
-                    <div class="input-group">
-                        <input type="number" id="precio_medio" name="precio_medio" 
-                               class="form-control" step="0.01" min="0" 
-                               placeholder="0.00">
-                        <span class="input-group-text">€</span>
-                    </div>
-                    <div class="form-text">Precio medio de los productos (opcional)</div>
-                </div>
-
-                <!-- Imagen -->
-                <div class="mb-4">
-                    <label for="imagen" class="form-label">
-                        <i class="fas fa-image me-2"></i>Imagen
-                    </label>
-                    <input type="text" id="imagen" name="imagen" class="form-control" 
-                           placeholder="nombre-imagen.jpg">
-                    <div class="form-text">Nombre del archivo de imagen (opcional, por defecto: default.jpg)</div>
                 </div>
 
                 <!-- Botones -->

@@ -34,7 +34,7 @@ public class CategoriaDetailServlet extends HttpServlet {
 
             request.setAttribute("categoria", categoria);
             
-            // Verificar el rol del usuario para mostrar opciones de edición
+            // Verificar si el usuario es admin
             HttpSession session = request.getSession();
             boolean esAdmin = session.getAttribute("es_admin") != null && (boolean) session.getAttribute("es_admin");
             request.setAttribute("esAdmin", esAdmin);

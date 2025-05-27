@@ -19,22 +19,35 @@ public class UsuarioDao {
         this.connection = connection;
     }
 
-    //Login: devuelve el rol como string ("admin" o "user")
-    public String loginUser(String email, String contrasena) throws SQLException, UsuarioNotFoundException {
-        String sql = "SELECT es_admin FROM usuarios WHERE email = ? AND contrasena = SHA1(?)";
-
-        PreparedStatement statement = connection.prepareStatement(sql);
-        statement.setString(1, email);
-        statement.setString(2, contrasena);
-        ResultSet result = statement.executeQuery();
-
-        if (!result.next()) {
-            throw new UsuarioNotFoundException();
-        }
-
-        // Convertir boolean es_admin a String "admin" o "user"
-        return result.getBoolean("es_admin") ? "admin" : "user";
+//Login: devuelve el rol como string ("admin" o "user")
+public String loginUser(String email, String contrasena) throws SQLException, UsuarioNotFoundException {
+    
+    // Generar hash SHA1 de la contraseña
+    String hashQuery = "SELECT SHA1(?) as hash_generado";
+    PreparedStatement hashStatement = connection.prepareStatement(hashQuery);
+    hashStatement.setString(1, contrasena);
+    ResultSet hashResult = hashStatement.executeQuery();
+    
+    String hashedPassword = "";
+    if (hashResult.next()) {
+        hashedPassword = hashResult.getString("hash_generado");
     }
+    
+    // Aquí compara email y contraseña hasheada
+    String sql = "SELECT es_admin FROM usuarios WHERE email = ? AND contrasena = ?";
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setString(1, email);
+    statement.setString(2, hashedPassword);
+    
+    ResultSet result = statement.executeQuery();
+
+    if (!result.next()) {
+        throw new UsuarioNotFoundException();
+    }
+    
+    // Convertir boolean es_admin a String "admin" o "user"
+    return result.getBoolean("es_admin") ? "admin" : "user";
+}
 
     // Metodo Add. Solo para admin
     public boolean add(Usuario usuario) throws SQLException {
@@ -164,5 +177,89 @@ public class UsuarioDao {
         
         statement.close();
         return usuariosList;
+    }
+
+    // Agregar este método a UsuarioDao.java
+public Usuario getUserByEmail(String email) throws SQLException, UsuarioNotFoundException {
+    String sql = "SELECT * FROM usuarios WHERE email = ?";
+    PreparedStatement statement = connection.prepareStatement(sql);
+    statement.setString(1, email);
+    ResultSet result = statement.executeQuery();
+    
+    if (!result.next()) {
+        throw new UsuarioNotFoundException();
+    }
+    
+    Usuario usuario = new Usuario();
+    usuario.setId(result.getInt("id"));
+    usuario.setNombre(result.getString("nombre"));
+    usuario.setEmail(result.getString("email"));
+    usuario.setEsAdmin(result.getBoolean("es_admin"));
+    usuario.setFechaRegistro(result.getDate("fecha_registro"));
+    usuario.setCredito(result.getBigDecimal("credito"));
+    usuario.setImagen(result.getString("imagen"));
+    
+    return usuario;
+}
+
+    // PAGINACIÓN - Contar usuarios
+    public int countUsuarios(String busqueda) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE 1=1";
+        if (busqueda != null && !busqueda.trim().isEmpty()) {
+            sql += " AND (nombre LIKE ? OR email LIKE ?)";
+        }
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            if (busqueda != null && !busqueda.trim().isEmpty()) {
+                statement.setString(1, "%" + busqueda + "%");
+                statement.setString(2, "%" + busqueda + "%");
+            }
+
+            try (ResultSet result = statement.executeQuery()) {
+                if (result.next()) {
+                    return result.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    // PAGINACIÓN - Obtener usuarios paginados
+    public ArrayList<Usuario> getUsuariosPaged(String busqueda, int offset, int limit) throws SQLException {
+        ArrayList<Usuario> usuarios = new ArrayList<>();
+        String sql = "SELECT * FROM usuarios WHERE 1=1";
+        
+        if (busqueda != null && !busqueda.trim().isEmpty()) {
+            sql += " AND (nombre LIKE ? OR email LIKE ?)";
+        }
+        
+        sql += " ORDER BY nombre LIMIT ? OFFSET ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            int index = 1;
+            
+            if (busqueda != null && !busqueda.trim().isEmpty()) {
+                statement.setString(index++, "%" + busqueda + "%");
+                statement.setString(index++, "%" + busqueda + "%");
+            }
+            
+            statement.setInt(index++, limit);
+            statement.setInt(index++, offset);
+
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    Usuario usuario = new Usuario();
+                    usuario.setId(result.getInt("id"));
+                    usuario.setNombre(result.getString("nombre"));
+                    usuario.setEmail(result.getString("email"));
+                    usuario.setEsAdmin(result.getBoolean("es_admin"));
+                    usuario.setFechaRegistro(result.getDate("fecha_registro"));
+                    usuario.setCredito(result.getBigDecimal("credito"));
+                    usuario.setImagen(result.getString("imagen"));
+                    usuarios.add(usuario);
+                }
+            }
+        }
+        return usuarios;
     }
 }

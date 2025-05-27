@@ -34,6 +34,9 @@
     </style>
 </head>
 <body>
+    <jsp:include page="../navbar.jsp">
+        <jsp:param name="pageTitle" value="Gestión de Categorías"/>
+    </jsp:include>
 
 <div class="container py-5 text-center">
 

@@ -10,8 +10,8 @@ public class Database {
 
     public void connect() throws ClassNotFoundException, SQLException {
         Class.forName("org.mariadb.jdbc.Driver");
-        // Actualiza la URL de conexión para usar la base de datos de Docker
-        connection = DriverManager.getConnection("jdbc:mariadb://localhost:3306/aa_doctorwho", "root", "5Jtlt6!!mar");
+        
+        connection = DriverManager.getConnection("jdbc:mariadb://db:3306/aa_doctorwho", "root", "5Jtlt6!!mar");
     }
 
     public void close() throws SQLException {

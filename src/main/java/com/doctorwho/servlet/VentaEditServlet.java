@@ -1,136 +1,80 @@
 package com.doctorwho.servlet;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-
 import com.doctorwho.dao.VentaDao;
+import com.doctorwho.dao.UsuarioDao;
+import com.doctorwho.dao.ArticuloDao;
 import com.doctorwho.database.Database;
 import com.doctorwho.model.Venta;
+import com.doctorwho.model.Usuario;
+import com.doctorwho.model.Articulo;
 
-@WebServlet("/edit_Venta")
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+import javax.servlet.RequestDispatcher;
+import java.io.IOException;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
+
+@WebServlet("/ventas/editar")
 public class VentaEditServlet extends HttpServlet {
 
-    private ArrayList<String> errors;
-
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setCharacterEncoding("UTF-8");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-        HttpSession currentSession = request.getSession();
-        if ((currentSession.getAttribute("role") == null) || (!currentSession.getAttribute("role").equals("admin"))) {
-            response.sendRedirect("/DoctorWho/login.jsp");
+        // Verificar si el usuario es admin
+        HttpSession session = request.getSession();
+        if (session.getAttribute("es_admin") == null || !(boolean) session.getAttribute("es_admin")) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
 
-        if (!validateRequest(request)) {
-            response.getWriter().println(errors.toString());
+        String idParam = request.getParameter("id");
+
+        if (idParam == null || !idParam.matches("\\d+")) {
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().println("<h2 style='color:red'>❌ ID de venta inválido.</h2>");
             return;
         }
-
-        String action = request.getParameter("action");
-
-        int usuarioId = Integer.parseInt(request.getParameter("usuario_id"));
-        int articuloId = Integer.parseInt(request.getParameter("articulo_id"));
-        int cantidad = Integer.parseInt(request.getParameter("cantidad"));
-        BigDecimal total = new BigDecimal(request.getParameter("total"));
-        String estadoVenta = request.getParameter("estado_venta");
-        boolean pagado = Boolean.parseBoolean(request.getParameter("pagado"));
 
         try {
-            Database database = new Database();
-            database.connect();
-            VentaDao ventaDao = new VentaDao(database.getConnection());
-            Venta venta = new Venta();
+            int id = Integer.parseInt(idParam);
+            Database db = new Database();
+            db.connect();
+            Connection connection = db.getConnection();
 
-            // Usando los nombres de métodos correctos según la clase Venta actualizada
-            venta.setUsuarioId(usuarioId);
-            venta.setArticuloId(articuloId);
-            venta.setCantidad(cantidad);
-            venta.setTotal(total);
-            venta.setFechaVenta(new Date(System.currentTimeMillis()));
-            venta.setEstadoVenta(estadoVenta);
-            venta.setPagado(pagado);
+            VentaDao ventaDao = new VentaDao(connection);
+            Venta venta = ventaDao.getVentaById(id);
 
-            if (!action.equals("Registrar")) {
-                venta.setId(Integer.parseInt(request.getParameter("venta_id")));
+            if (venta == null) {
+                response.setContentType("text/html;charset=UTF-8");
+                response.getWriter().println("<h2 style='color:red'>❌ Venta no encontrada.</h2>");
+                db.close();
+                return;
             }
 
-            boolean done = false;
-            if (action.equals("Registrar")) {
-                done = ventaDao.addVenta(venta);
-            } else {
-                done = ventaDao.updateVenta(venta);
-            }
+            // Cargar usuarios y artículos para los selects
+            UsuarioDao usuarioDao = new UsuarioDao(connection);
+            ArticuloDao articuloDao = new ArticuloDao(connection);
+            
+            ArrayList<Usuario> usuarios = usuarioDao.getAll(1);
+            List<Articulo> articulos = articuloDao.getAllArticulos();
 
-            if (done) {
-                response.getWriter().print("ok");
-            } else {
-                response.getWriter().print("No se ha podido guardar la venta");
-            }
-        } catch (SQLException sqle) {
-            response.getWriter().println("No se ha podido conectar con la base de datos");
-            sqle.printStackTrace();
-        } catch (ClassNotFoundException cnfe) {
-            response.getWriter().println("No se ha podido cargar el driver de la base de datos");
-            cnfe.printStackTrace();
-        } catch (IOException ioe) {
-            response.getWriter().println("Error no esperado: " + ioe.getMessage());
-            ioe.printStackTrace();
+            request.setAttribute("venta", venta);
+            request.setAttribute("usuarios", usuarios);
+            request.setAttribute("articulos", articulos);
+
+            db.close();
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/ventas/editar.jsp");
+            dispatcher.forward(request, response);
+
         } catch (Exception e) {
-            response.getWriter().println("Error: " + e.getMessage());
             e.printStackTrace();
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().println("<h2 style='color:red'>❌ Error al cargar la venta para edición.</h2>");
         }
-    }
-
-    private boolean validateRequest(HttpServletRequest request) {
-        errors = new ArrayList<>();
-
-        try {
-            // Validar que usuario_id sea numérico y exista
-            if (request.getParameter("usuario_id").isEmpty() ||
-                    !request.getParameter("usuario_id").matches("\\d+")) {
-                errors.add("ID de usuario inválido");
-            }
-
-            // Validar que articulo_id sea numérico y exista
-            if (request.getParameter("articulo_id").isEmpty() ||
-                    !request.getParameter("articulo_id").matches("\\d+")) {
-                errors.add("ID de artículo inválido");
-            }
-
-            // Validar que cantidad sea numérico y positivo
-            if (request.getParameter("cantidad").isEmpty() ||
-                    !request.getParameter("cantidad").matches("\\d+") ||
-                    Integer.parseInt(request.getParameter("cantidad")) <= 0) {
-                errors.add("La cantidad debe ser un número positivo");
-            }
-
-            // Validar que total sea numérico y positivo
-            if (request.getParameter("total").isEmpty() ||
-                    !request.getParameter("total").matches("[0-9]*\\.?[0-9]*") ||
-                    Double.parseDouble(request.getParameter("total")) <= 0) {
-                errors.add("El total debe ser un número positivo");
-            }
-
-            // Validar estado de venta
-            String estadoVenta = request.getParameter("estado_venta");
-            if (estadoVenta == null || estadoVenta.isEmpty()) {
-                errors.add("El estado de venta es obligatorio");
-            }
-
-        } catch (NumberFormatException e) {
-            errors.add("Error en formato de número: " + e.getMessage());
-        }
-
-        return errors.isEmpty();
     }
 }

@@ -39,10 +39,6 @@ public class CategoriaListServlet extends HttpServlet {
 
             int offset = (page - 1) * limit;
 
-            // Log para debug
-            System.out.println("🔍 FILTROS: q=" + q + ", mostrarSoloConProductos=" + mostrarSoloConProductos);
-            System.out.println("📄 PAGINACIÓN: page=" + page + ", limit=" + limit + ", offset=" + offset);
-
             // Contar el total de resultados
             int totalCategorias = dao.countAllCategorias(q, mostrarSoloConProductos);
             int totalPages = (int) Math.ceil((double) totalCategorias / limit);
@@ -57,7 +53,7 @@ public class CategoriaListServlet extends HttpServlet {
             request.setAttribute("q", q);
             request.setAttribute("mostrarSoloConProductos", mostrarSoloConProductos);
 
-            // Verificar el rol del usuario para mostrar opciones de edición
+            // Verificar si el usuario es admin
             HttpSession session = request.getSession();
             boolean esAdmin = session.getAttribute("es_admin") != null && (boolean) session.getAttribute("es_admin");
             request.setAttribute("esAdmin", esAdmin);

@@ -1,47 +1,64 @@
 package com.doctorwho.servlet;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.ArrayList;
-
 import com.doctorwho.dao.ArticuloDao;
 import com.doctorwho.database.Database;
+import com.doctorwho.model.Articulo;
 
-@WebServlet("/delete_Articulo")
+import javax.servlet.*;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.sql.Connection;
+
+@WebServlet("/articulos/eliminar")
 public class ArticuloDeleteServlet extends HttpServlet {
-
+    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setCharacterEncoding("UTF-8");
 
-        HttpSession currentSession = request.getSession();
-        if (currentSession.getAttribute("es_admin") == null) {
-            response.sendRedirect("/DoctorWho/login.jsp");
+        // Verificar si el usuario es admin
+        HttpSession session = request.getSession();
+        if (session.getAttribute("es_admin") == null || !(boolean) session.getAttribute("es_admin")) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
 
-        String articulo_id = request.getParameter("articulo_id");
-        // TODO añadir validación
+        response.setCharacterEncoding("UTF-8");
+
         try {
+            String idParam = request.getParameter("id");
+            
+            if (idParam == null || idParam.trim().isEmpty()) {
+                response.getWriter().println("❌ ID de artículo requerido.");
+                return;
+            }
+            
+            int id = Integer.parseInt(idParam);
+
             Database db = new Database();
             db.connect();
-            ArticuloDao articuloDao = new ArticuloDao(db.getConnection());
-            articuloDao.deleteArticulo(Integer.parseInt(articulo_id));
-            // TODO borrar imagen
-            response.sendRedirect("/DoctorWho");
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        } catch (ClassNotFoundException cnfe) {
-            cnfe.printStackTrace();
+            Connection connection = db.getConnection();
+
+            ArticuloDao dao = new ArticuloDao(connection);
+            Articulo articulo = dao.getArticuloById(id);
+            
+            if (articulo != null) {
+                boolean eliminado = dao.deleteArticulo(id);
+                if (eliminado) {
+                    request.getSession().setAttribute("deletedArticulo", articulo.getNombre());
+                }
+            }
+
+            response.sendRedirect(request.getContextPath() + "/articulos/lista");
+            
+            db.close();
+
+        } catch (NumberFormatException e) {
+            response.getWriter().println("❌ ID de artículo inválido.");
         } catch (Exception e) {
             e.printStackTrace();
+            response.getWriter().println("❌ Error al eliminar el artículo.");
         }
     }
 }

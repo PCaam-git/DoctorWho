@@ -23,7 +23,7 @@ public class ArticuloAddServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        Connection connection = null; // Declara la variable aquí
+        Connection connection = null; 
         try {
             Database database = new Database();
             database.connect();
@@ -42,14 +42,14 @@ public class ArticuloAddServlet extends HttpServlet {
             boolean exito = dao.addArticulo(articulo);
 
             if (exito) {
-                response.sendRedirect(request.getContextPath() + "/articulos/list.jsp?mensaje=añadido");
+                response.sendRedirect(request.getContextPath() + "/articulos/lista.jsp?mensaje=añadido");
             } else {
-                response.sendRedirect(request.getContextPath() + "/articulos/form.jsp?error=true");
+                response.sendRedirect(request.getContextPath() + "/articulos/formulario.jsp?error=true");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/articulos/form.jsp?error=true");
+            response.sendRedirect(request.getContextPath() + "/articulos/formulario.jsp?error=true");
         } finally {
             if (connection != null) {
                 try {

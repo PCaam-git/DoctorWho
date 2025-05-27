@@ -13,9 +13,34 @@ import java.io.IOException;
 public class LogoutServlet extends HttpServlet {
 
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession currentSession = request.getSession();
-        currentSession.invalidate();
-        response.sendRedirect(request.getContextPath() + "/index.jsp");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        // Obtener sesión actual
+        HttpSession session = request.getSession(false);
+        
+        if (session != null) {
+            // Guardar información para mensaje de despedida
+            String email = (String) session.getAttribute("email");
+            
+            // Invalidar sesión
+            session.invalidate();
+            
+            // Crear nueva sesión para el mensaje
+            HttpSession newSession = request.getSession();
+            if (email != null) {
+                newSession.setAttribute("logoutMessage", "Sesión cerrada correctamente para " + email);
+            }
+        }
+        
+        // Redirigir al login con mensaje
+        response.sendRedirect(request.getContextPath() + "/login.jsp?logout=true");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // También permitir logout por POST
+        doGet(request, response);
     }
 }
